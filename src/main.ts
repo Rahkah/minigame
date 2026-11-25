@@ -60,7 +60,7 @@ function renderTitle(): string {
       <div>
         <div class="title-kicker">极简话术肉鸽 · 5 站完整可玩版</div>
         <h1 class="title-main"><span class="title-hi">社恐生存图鉴</span></h1>
-        <div class="title-sub">看色块就能秒懂 · 守住自信心与面子</div>
+        <div class="title-sub">守住 ❤️ 心态 · 叠厚 🛡️ 脸皮 · 怼赢全场</div>
       </div>
 
       <div class="title-hero">
@@ -70,9 +70,9 @@ function renderTitle(): string {
 
       <div class="title-actions">
         <div class="legend-strip">
-          <span class="legend-pill red">🟥 怼：打气势</span>
-          <span class="legend-pill blue">🟦 面子：挡伤</span>
-          <span class="legend-pill yellow">🟨 话头/抽牌</span>
+          <span class="legend-pill red">⚔️ 怼：打气势</span>
+          <span class="legend-pill blue">🛡️ 脸皮：本回合挡伤</span>
+          <span class="legend-pill yellow">⚡ 话头 / 🃏 抽牌</span>
           <span class="legend-pill purple">🔥破防×2 · 🌀语塞÷2</span>
         </div>
         <button class="doodle-btn" data-action="start-run">开始今日 5 站社交 ▸</button>
@@ -87,7 +87,7 @@ function renderMap(): string {
       <div class="map-top">
         <div class="taped-title">今日出门 5 站</div>
         <div class="map-stats">
-          <span class="pill-btn" data-action="noop">❤️ ${run.playerHp}/${run.playerMaxHp}</span>
+          <span class="pill-btn" data-action="noop">❤️ 心态 ${run.playerHp}/${run.playerMaxHp}</span>
           <button class="pill-btn" data-action="toggle-deck">🃏 牌库(${run.deck.length})</button>
         </div>
       </div>
@@ -119,7 +119,7 @@ function renderMap(): string {
                 <div class="fork-row">
                   <button class="fork-btn" data-action="enter-rest">
                     <span class="fb-name">☕ 走进街头咖啡馆 ▸</span>
-                    <span class="fb-meta">回自信心 / 升级话术 / 删废卡</span>
+                    <span class="fb-meta">回心态 / 升级话术 / 删废卡</span>
                   </button>
                 </div>
               `;
@@ -247,7 +247,7 @@ function renderBattle(): string {
 
         <div class="hp-wrap">
           <div class="hp-label">
-            <span>自信心 ${run.playerHp}/${run.playerMaxHp}</span>
+            <span>❤️ 心态 ${run.playerHp}/${run.playerMaxHp}</span>
             ${b.cardsPlayedThisTurn > 0 ? `<span>连击 ${b.cardsPlayedThisTurn}</span>` : ''}
           </div>
           <div class="scribble-bar">
@@ -256,7 +256,7 @@ function renderBattle(): string {
         </div>
 
         <div class="shield-badge ${b.shieldBump ? 'bump' : ''} ${previewFaceGain > 0 ? 'previewing' : ''}">
-          <span>面子</span>
+          <span>🛡️脸皮</span>
           <strong>${displayedFace}</strong>
         </div>
 
@@ -449,17 +449,17 @@ function renderRest(): string {
     <section class="screen choice-screen">
       <div class="banner-box">
         <div class="stamp-title">☕ 第 3 站 · 咖啡馆喘口气</div>
-        <div class="stamp-sub">当前自信心 ${run.playerHp}/${run.playerMaxHp} · 牌库 ${run.deck.length} 张</div>
+        <div class="stamp-sub">当前 ❤️ 心态 ${run.playerHp}/${run.playerMaxHp} · 牌库 ${run.deck.length} 张</div>
       </div>
 
       <div class="card-choice-list">
         <button class="rest-option" data-action="rest-heal">
           <strong>🧋 猛喝一杯冰美式</strong>
-          <span>立刻恢复 24 点自信心（最高回满至 ${run.playerMaxHp}）</span>
+          <span>立刻恢复 24 点 ❤️ 心态（最高回满至 ${run.playerMaxHp}）</span>
         </button>
         <button class="rest-option" data-action="rest-to-upgrade">
           <strong>📝 悄悄复盘话术</strong>
-          <span>挑选牌库里 1 张卡升级为 + 版，伤害/面子大幅提升</span>
+          <span>挑选牌库里 1 张卡升级为 + 版，怼伤/脸皮大幅提升</span>
         </button>
         <button class="rest-option" data-action="rest-to-remove">
           <strong>🧹 删掉 1 张尴尬旧卡</strong>
@@ -476,7 +476,7 @@ function renderReport(): string {
   return `
     <section class="screen report-screen">
       <div class="banner-box">
-        <div class="stamp-title">${run.stats.wonRun ? '🎉 今日社交大获全胜！' : '💀 自信心归零 · 社死逃回家'}</div>
+        <div class="stamp-title">${run.stats.wonRun ? '🎉 今日社交大获全胜！' : '💔 心态崩了 · 连夜逃回家'}</div>
         <div class="stamp-sub">手绘社恐生存体检报告</div>
       </div>
 
@@ -491,7 +491,7 @@ function renderReport(): string {
             <strong>${run.stats.stagesCleared} / 5 站</strong>
           </div>
           <div class="report-cell">
-            <span>剩余自信心</span>
+            <span>剩余心态</span>
             <strong>❤️ ${run.playerHp} / ${run.playerMaxHp}</strong>
           </div>
           <div class="report-cell">

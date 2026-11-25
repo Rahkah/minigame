@@ -188,32 +188,32 @@ export function evaluateCardPreview(
     if (battle && battle.face > 0) {
       chips.push({
         color: 'red',
-        text: isDoubleBroken ? `怼 ${totalDamage}!` : `怼 ${totalDamage}`,
+        text: isDoubleBroken ? `⚔️怼 ${totalDamage}!` : `⚔️怼 ${totalDamage}`,
         boosted: true,
       });
     } else {
-      chips.push({ color: 'red', text: `面子×${eff.faceSlamMultiplier}` });
+      chips.push({ color: 'red', text: `🛡️脸皮×${eff.faceSlamMultiplier}` });
     }
   } else if (eff.comboPerCard) {
     if (battle && battle.cardsPlayedThisTurn > 0) {
       chips.push({
         color: 'red',
-        text: isDoubleBroken ? `怼 ${totalDamage}!` : `怼 ${totalDamage}`,
+        text: isDoubleBroken ? `⚔️怼 ${totalDamage}!` : `⚔️怼 ${totalDamage}`,
         boosted: true,
       });
     } else {
-      chips.push({ color: 'red', text: `连击×${eff.comboPerCard}` });
+      chips.push({ color: 'red', text: `⚡连击×${eff.comboPerCard}` });
     }
   } else if (baseDamage > 0) {
     chips.push({
       color: 'red',
-      text: isDoubleBroken ? `怼 ${totalDamage}!` : `怼 ${totalDamage}`,
+      text: isDoubleBroken ? `⚔️怼 ${totalDamage}!` : `⚔️怼 ${totalDamage}`,
       boosted: isDoubleBroken,
     });
   }
 
   if (faceGain > 0) {
-    chips.push({ color: 'blue', text: `面子 +${faceGain}` });
+    chips.push({ color: 'blue', text: `🛡️脸皮+${faceGain}` });
   }
 
   if (appliesBreak && chips.length < 2) {
@@ -223,34 +223,34 @@ export function evaluateCardPreview(
     chips.push({ color: 'purple', text: '🌀语塞' });
   }
   if (energyGain > 0 && chips.length < 2) {
-    chips.push({ color: 'yellow', text: `话头 +${energyGain}` });
+    chips.push({ color: 'yellow', text: `⚡话头+${energyGain}` });
   }
   if (drawCount > 0 && chips.length < 2) {
-    chips.push({ color: 'yellow', text: `抽 ${drawCount}` });
+    chips.push({ color: 'yellow', text: `🃏抽 ${drawCount}` });
   }
 
   // Human-readable 1-line preview summary when selected
   const parts: string[] = [];
   if (clearsFace) {
     if (battle && battle.face > 0) {
-      parts.push(`清空 ${battle.face} 面子 → 怼 ${totalDamage} 伤`);
+      parts.push(`撕破 ${battle.face} 点脸皮 → 怼 ${totalDamage} 伤`);
     } else {
-      parts.push('需要先叠【面子】才能反杀！');
+      parts.push('需要先叠【🛡️脸皮】才能反杀！');
     }
   } else if (eff.comboPerCard) {
     parts.push(
       `本回合已出 ${battle?.cardsPlayedThisTurn ?? 0} 张牌 → 怼 ${totalDamage} 伤（每张+${eff.comboPerCard}）`,
     );
   } else if (totalDamage > 0) {
-    parts.push(isDoubleBroken ? `🔥破防翻倍！怼 ${totalDamage} 伤` : `怼 ${totalDamage} 伤`);
+    parts.push(isDoubleBroken ? `🔥破防翻倍！怼 ${totalDamage} 伤` : `⚔️怼 ${totalDamage} 伤`);
   }
 
-  if (faceGain > 0) parts.push(`面子 +${faceGain}`);
+  if (faceGain > 0) parts.push(`🛡️脸皮 +${faceGain}`);
   if (appliesBreak) parts.push('挂🔥破防(下次怼伤×2)');
   if (appliesSpeechless) parts.push('挂🌀语塞(对方下击÷2)');
-  if (energyGain > 0) parts.push(`话头 +${energyGain}`);
+  if (energyGain > 0) parts.push(`⚡话头 +${energyGain}`);
   if (drawCount > 0) parts.push(`摸 ${drawCount} 张牌`);
-  if (selfHpLoss > 0) parts.push(`自扣 ${selfHpLoss} 自信心`);
+  if (selfHpLoss > 0) parts.push(`自扣 ${selfHpLoss} 心态`);
   if (exhausts) parts.push('本场仅用1次');
 
   return {
@@ -310,7 +310,7 @@ export function startBattle(run: RunState, enemyId: string): void {
     discardPile: [],
     exhaustPile: [],
     selectedUid: null,
-    sfxText: startFace > 0 ? '🎧 降噪耳机 +6面子' : '',
+    sfxText: startFace > 0 ? '🎧 降噪耳机 脸皮+6' : '',
     sfxSeq: startFace > 0 ? 1 : 0,
     enemyAnim: '',
     shakeSeq: 0,
@@ -351,7 +351,7 @@ export function playSelectedCard(run: RunState, uid: string): {
     return { played: false, wonNow: false, lostNow: false };
   }
   if (preview.clearsFace && battle.face <= 0) {
-    battle.sfxText = '先叠点面子再用!';
+    battle.sfxText = '先叠点脸皮再用!';
     battle.sfxSeq += 1;
     return { played: false, wonNow: false, lostNow: false };
   }
@@ -410,7 +410,7 @@ export function playSelectedCard(run: RunState, uid: string): {
       sfxParts.push('🕶️破防!');
     }
   } else if (preview.faceGain > 0) {
-    sfxParts.push(`面子+${preview.faceGain}`);
+    sfxParts.push(`脸皮+${preview.faceGain}`);
   }
 
   if (preview.appliesBreak) {
@@ -472,9 +472,9 @@ export function endPlayerTurn(run: RunState): { lostNow: boolean } {
 
   if (remain > 0) {
     run.playerHp = Math.max(0, run.playerHp - remain);
-    battle.sfxText = wasWeakened ? `语塞减半! 自信 -${remain}` : `面子裂开!! 自信 -${remain}`;
+    battle.sfxText = wasWeakened ? `语塞减半! 心态 -${remain}` : `脸皮磨破!! 心态 -${remain}`;
   } else {
-    battle.sfxText = wasWeakened ? '对方语塞 · 轻松挡住!' : '面子硬扛住了!!';
+    battle.sfxText = wasWeakened ? '对方语塞 · 轻松挡住!' : '脸皮够厚 · 硬扛住了!!';
   }
   battle.sfxSeq += 1;
 

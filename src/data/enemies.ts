@@ -41,13 +41,13 @@ export const RELICS: Record<string, RelicDef> = {
     id: 'thick_skin',
     icon: '🧱',
     name: '祖传厚脸皮',
-    desc: '回合结束最多保留 4 点面子',
+    desc: '回合结束最多保留 4 点脸皮',
   },
   earphones: {
     id: 'earphones',
     icon: '🎧',
     name: '降噪耳机',
-    desc: '每场开局立刻获得 6 点面子',
+    desc: '每场开局立刻获得 6 点脸皮',
   },
   iced_coffee: {
     id: 'iced_coffee',
@@ -188,7 +188,7 @@ export const RUN_STAGES: StageSlot[] = [
     stage: 3,
     kind: 'rest',
     title: '第 3 站 · 咖啡馆喘口气',
-    subtitle: '回血 / 升级话术 / 删废卡三选一',
+    subtitle: '回心态 / 升级话术 / 删废卡三选一',
   },
   {
     stage: 4,
