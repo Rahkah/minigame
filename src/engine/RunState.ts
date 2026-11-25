@@ -10,6 +10,8 @@ import { ENEMIES, RELICS, RUN_STAGES, type EnemyDef, type EnemyMove } from '../d
 
 export type ScreenKind = 'title' | 'map' | 'battle' | 'reward' | 'rest' | 'report';
 
+const TUTORIAL_STORAGE_KEY = 'minigame_doodle_tut_seen_v1';
+
 export interface StatChip {
   color: 'red' | 'blue' | 'yellow' | 'purple';
   text: string;
@@ -37,6 +39,8 @@ export interface CardPreview {
 export interface BattleState {
   enemy: EnemyDef;
   enemyHp: number;
+  enemyFace: number;
+  enemyAtkBuff: number;
   enemyBreak: number;
   enemySpeechless: number;
   moveIndex: number;
@@ -70,7 +74,7 @@ export interface RunStats {
 
 export interface RunState {
   screen: ScreenKind;
-  currentStage: number; // 1..5
+  currentStage: number;
   playerHp: number;
   playerMaxHp: number;
   deck: CardInstance[];
@@ -81,6 +85,7 @@ export interface RunState {
   rewardMode: 'pick' | 'upgrade';
   restMode: 'menu' | 'upgrade' | 'remove';
   showDeckOverlay: boolean;
+  tutorialStep: number | null;
   stats: RunStats;
   uidCounter: number;
 }
@@ -92,6 +97,22 @@ function shuffle<T>(arr: T[]): T[] {
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
   return copy;
+}
+
+export function hasSeenTutorial(): boolean {
+  try {
+    return localStorage.getItem(TUTORIAL_STORAGE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+export function markTutorialSeen(): void {
+  try {
+    localStorage.setItem(TUTORIAL_STORAGE_KEY, '1');
+  } catch {
+    // ignore storage errors in restricted webviews
+  }
 }
 
 export function createNewRun(): RunState {
@@ -115,6 +136,7 @@ export function createNewRun(): RunState {
     rewardMode: 'pick',
     restMode: 'menu',
     showDeckOverlay: false,
+    tutorialStep: null,
     stats: {
       stagesCleared: 0,
       totalCardsPlayed: 0,
@@ -140,12 +162,37 @@ export function getEnemyMove(battle: BattleState): EnemyMove {
   return battle.enemy.moves[battle.moveIndex % battle.enemy.moves.length];
 }
 
+export function getRawEnemyDamage(battle: BattleState): number {
+  const move = getEnemyMove(battle);
+  if (!move.damage || move.damage <= 0) return 0;
+  return move.damage + battle.enemyAtkBuff;
+}
+
 export function getEffectiveEnemyDamage(battle: BattleState): number {
-  const raw = getEnemyMove(battle).damage;
+  const raw = getRawEnemyDamage(battle);
+  if (raw <= 0) return 0;
   if (battle.enemySpeechless > 0) {
     return Math.floor(raw / 2);
   }
   return raw;
+}
+
+export function getEnemyIntentExplain(battle: BattleState): string {
+  const move = getEnemyMove(battle);
+  const effDmg = getEffectiveEnemyDamage(battle);
+  const weakened = battle.enemySpeechless > 0 && effDmg > 0;
+
+  if (move.intentType === 'attack') {
+    return `⚔️ 准备攻击：下回合打你 ${effDmg} 点心态${weakened ? '（已被🌀语塞减半）' : ''}，记得叠 🛡️脸皮！`;
+  }
+  if (move.intentType === 'defend') {
+    return `🛡️ 准备防御：下回合不打你，只叠 ${move.block ?? 0} 点敌方脸皮，趁机猛攻或挂 🔥破防！`;
+  }
+  if (move.intentType === 'buff') {
+    const healPart = move.heal ? `并回气 +${move.heal}` : '';
+    return `📈 蓄力加 Buff：下回合不打你，但后续攻击永久 +${move.atkBuff ?? 0}${healPart}，抓紧抢攻！`;
+  }
+  return `⚔️🛡️ 攻防兼备：下回合打你 ${effDmg} 点心态，同时给自己叠 ${move.block ?? 0} 点脸皮！`;
 }
 
 export function evaluateCardPreview(
@@ -181,7 +228,6 @@ export function evaluateCardPreview(
       (!clearsFace || battle.face > 0),
   );
 
-  // Build ultra-clean max-2 chips so players read every card in <1 second
   const chips: StatChip[] = [];
 
   if (eff.faceSlamMultiplier) {
@@ -229,7 +275,6 @@ export function evaluateCardPreview(
     chips.push({ color: 'yellow', text: `🃏抽 ${drawCount}` });
   }
 
-  // Human-readable 1-line preview summary when selected
   const parts: string[] = [];
   if (clearsFace) {
     if (battle && battle.face > 0) {
@@ -285,16 +330,33 @@ function drawCards(battle: BattleState, count: number): void {
   }
 }
 
-export function startBattle(run: RunState, enemyId: string): void {
+export function startBattle(run: RunState, enemyId: string, forceTutorial = false): void {
   const enemy = ENEMIES[enemyId];
   if (!enemy) return;
 
   const startFace = run.relicIds.includes('earphones') ? 6 : 0;
   const turnOneBonus = run.relicIds.includes('iced_coffee') ? 1 : 0;
 
+  const shouldShowTut = forceTutorial || (!hasSeenTutorial() && run.currentStage === 1);
+
+  // During tutorial, guarantee the opening hand contains Next-Time (shield), Nonsense (break), and Decline (attack)
+  let drawPile = shuffle([...run.deck]);
+  const hand: CardInstance[] = [];
+  if (shouldShowTut) {
+    const desired = ['next_time', 'nonsense', 'decline', 'phone'];
+    for (const id of desired) {
+      const idx = drawPile.findIndex((c) => c.templateId === id);
+      if (idx !== -1) {
+        hand.push(drawPile.splice(idx, 1)[0]);
+      }
+    }
+  }
+
   const battle: BattleState = {
     enemy,
     enemyHp: enemy.maxHp,
+    enemyFace: 0,
+    enemyAtkBuff: 0,
     enemyBreak: 0,
     enemySpeechless: 0,
     moveIndex: 0,
@@ -305,8 +367,8 @@ export function startBattle(run: RunState, enemyId: string): void {
     turn: 1,
     cardsPlayedThisTurn: 0,
     sunglassesUsed: false,
-    drawPile: shuffle([...run.deck]),
-    hand: [],
+    drawPile,
+    hand,
     discardPile: [],
     exhaustPile: [],
     selectedUid: null,
@@ -318,8 +380,12 @@ export function startBattle(run: RunState, enemyId: string): void {
     outcome: 'ongoing',
   };
 
-  drawCards(battle, 4);
+  if (battle.hand.length < 4) {
+    drawCards(battle, 4 - battle.hand.length);
+  }
+
   run.battle = battle;
+  run.tutorialStep = shouldShowTut ? 0 : null;
   run.screen = 'battle';
 }
 
@@ -356,7 +422,6 @@ export function playSelectedCard(run: RunState, uid: string): {
     return { played: false, wonNow: false, lostNow: false };
   }
 
-  // Spend energy & move card out of hand
   battle.energy -= preview.cost;
   battle.hand.splice(idx, 1);
   battle.selectedUid = null;
@@ -390,7 +455,14 @@ export function playSelectedCard(run: RunState, uid: string): {
   const sfxParts: string[] = [tpl.sfx];
 
   if (preview.totalDamage > 0) {
-    battle.enemyHp = Math.max(0, battle.enemyHp - preview.totalDamage);
+    let dmg = preview.totalDamage;
+    if (battle.enemyFace > 0) {
+      const blocked = Math.min(battle.enemyFace, dmg);
+      battle.enemyFace -= blocked;
+      dmg -= blocked;
+    }
+    battle.enemyHp = Math.max(0, battle.enemyHp - dmg);
+
     if (preview.isDoubleBroken) {
       battle.enemyBreak = Math.max(0, battle.enemyBreak - 1);
       sfxParts.push(`×2暴击 -${preview.totalDamage}`);
@@ -403,7 +475,6 @@ export function playSelectedCard(run: RunState, uid: string): {
     battle.enemyAnim = 'hit';
     battle.shakeSeq += 1;
 
-    // Sunglasses relic: first attack card each battle applies 1 🔥破防
     if (run.relicIds.includes('sunglasses') && !battle.sunglassesUsed) {
       battle.sunglassesUsed = true;
       battle.enemyBreak += 1;
@@ -427,7 +498,6 @@ export function playSelectedCard(run: RunState, uid: string): {
   battle.sfxText = sfxParts.join(' ');
   battle.sfxSeq += 1;
 
-  // Check enemy defeat
   if (battle.enemyHp <= 0) {
     battle.outcome = 'won';
     battle.enemyLine = battle.enemy.winLine;
@@ -444,38 +514,61 @@ export function endPlayerTurn(run: RunState): { lostNow: boolean } {
 
   battle.selectedUid = null;
 
-  // Discard remaining hand
   while (battle.hand.length > 0) {
     const c = battle.hand.pop();
     if (c) battle.discardPile.push(c);
   }
 
-  // Execute enemy move
+  // Enemy previous block expires before its new move
+  battle.enemyFace = 0;
+
   const move = getEnemyMove(battle);
   const incoming = getEffectiveEnemyDamage(battle);
-  const wasWeakened = battle.enemySpeechless > 0;
-  battle.enemySpeechless = Math.max(0, battle.enemySpeechless - 1);
+  const wasWeakened = battle.enemySpeechless > 0 && incoming > 0;
+  if (incoming > 0) {
+    battle.enemySpeechless = Math.max(0, battle.enemySpeechless - 1);
+  }
 
-  if (move.heal && battle.enemyHp > 0) {
+  const sfxBits: string[] = [];
+
+  if (move.block && move.block > 0) {
+    battle.enemyFace += move.block;
+  }
+  if (move.atkBuff && move.atkBuff > 0) {
+    battle.enemyAtkBuff += move.atkBuff;
+  }
+  if (move.heal && move.heal > 0 && battle.enemyHp > 0) {
     battle.enemyHp = Math.min(battle.enemy.maxHp, battle.enemyHp + move.heal);
   }
 
-  let remain = incoming;
-  if (battle.face > 0) {
-    const blocked = Math.min(battle.face, remain);
-    battle.face -= blocked;
-    remain -= blocked;
+  if (incoming > 0) {
+    let remain = incoming;
+    if (battle.face > 0) {
+      const blocked = Math.min(battle.face, remain);
+      battle.face -= blocked;
+      remain -= blocked;
+    }
+
+    battle.enemyAnim = 'atk';
+    battle.shakeSeq += 1;
+
+    if (remain > 0) {
+      run.playerHp = Math.max(0, run.playerHp - remain);
+      sfxBits.push(wasWeakened ? `语塞减半! 心态 -${remain}` : `脸皮磨破!! 心态 -${remain}`);
+    } else {
+      sfxBits.push(wasWeakened ? '对方语塞 · 轻松挡住!' : '脸皮够厚 · 硬扛住了!!');
+    }
+
+    if (move.block) sfxBits.push(`敌🛡️+${move.block}`);
+  } else if (move.intentType === 'defend') {
+    battle.enemyAnim = 'atk';
+    sfxBits.push(`对手防御! 敌方脸皮 +${move.block ?? 0}`);
+  } else if (move.intentType === 'buff') {
+    battle.enemyAnim = 'atk';
+    sfxBits.push(`对手蓄力! 攻击永久 +${move.atkBuff ?? 0}`);
   }
 
-  battle.enemyAnim = 'atk';
-  battle.shakeSeq += 1;
-
-  if (remain > 0) {
-    run.playerHp = Math.max(0, run.playerHp - remain);
-    battle.sfxText = wasWeakened ? `语塞减半! 心态 -${remain}` : `脸皮磨破!! 心态 -${remain}`;
-  } else {
-    battle.sfxText = wasWeakened ? '对方语塞 · 轻松挡住!' : '脸皮够厚 · 硬扛住了!!';
-  }
+  battle.sfxText = sfxBits.join(' · ');
   battle.sfxSeq += 1;
 
   if (run.playerHp <= 0) {
@@ -485,14 +578,12 @@ export function endPlayerTurn(run: RunState): { lostNow: boolean } {
     return { lostNow: true };
   }
 
-  // Advance to next turn
   battle.turn += 1;
   battle.moveIndex += 1;
   const nextMove = getEnemyMove(battle);
   battle.enemyLine = nextMove.line;
   battle.cardsPlayedThisTurn = 0;
 
-  // Relic: thick_skin retains up to 4 Face
   battle.face = run.relicIds.includes('thick_skin') ? Math.min(battle.face, 4) : 0;
   battle.energy = battle.maxEnergy;
   drawCards(battle, 4);
@@ -507,7 +598,6 @@ export function preparePostBattleReward(run: RunState): void {
     return;
   }
 
-  // Pick 3 distinct reward cards spanning different archetypes when possible
   const byArch = {
     shield: shuffle(REWARD_POOL_IDS.filter((id) => CARD_TEMPLATES[id].archetype === 'shield')),
     burst: shuffle(REWARD_POOL_IDS.filter((id) => CARD_TEMPLATES[id].archetype === 'burst')),
@@ -521,7 +611,6 @@ export function preparePostBattleReward(run: RunState): void {
   run.rewardChoices = choices;
   run.rewardMode = 'pick';
 
-  // Award a new relic on Elite stages (stage 2 & stage 4)
   run.rewardRelicId = null;
   if (run.battle?.enemy.tier === 'elite') {
     const unowned = Object.keys(RELICS).filter((id) => !run.relicIds.includes(id));

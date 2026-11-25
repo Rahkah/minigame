@@ -1,7 +1,11 @@
+export type IntentType = 'attack' | 'defend' | 'buff' | 'attack_defend';
+
 export interface EnemyMove {
+  intentType: IntentType;
   label: string;
-  damage: number;
-  /** Optional enemy self-heal / hype buff */
+  damage?: number;
+  block?: number;
+  atkBuff?: number;
   heal?: number;
   line: string;
 }
@@ -74,11 +78,12 @@ export const ENEMIES: Record<string, EnemyDef> = {
     svgKey: 'colleague',
     introLine: '“呀好巧！吃了吗？今天天气真不错哈…”',
     winLine: '“叮——我先出去了，回头联系哈！”',
-    loseLine: '“对了周末有空帮我看看这个PPT吗？”（社死！）',
+    loseLine: '“对了周末有空帮我看看这个PPT吗？”（心态崩了！）',
     moves: [
-      { label: '尬聊寒暄', damage: 8, line: '“呀好巧！吃了吗？今天天气不错哈…”' },
-      { label: '沉默凝视', damage: 11, line: '“哈哈…你平时周末一般都干嘛呀？”' },
-      { label: '顺便问问', damage: 9, line: '“对了你们组今年绩效发得早不早呀？”' },
+      { intentType: 'attack', label: '尬聊寒暄', damage: 8, line: '“呀好巧！吃了吗？今天天气真不错哈…”' },
+      { intentType: 'defend', label: '盯楼层装忙', block: 8, line: '“咳咳…这电梯今天怎么走得这么慢呀…”' },
+      { intentType: 'buff', label: '清清嗓子', atkBuff: 3, line: '“对了突然想起来，有件大事得问问你！”' },
+      { intentType: 'attack', label: '打听绩效', damage: 10, line: '“你们组今年年终奖发得早不早呀？”' },
     ],
   },
   flyer: {
@@ -91,11 +96,11 @@ export const ENEMIES: Record<string, EnemyDef> = {
     svgKey: 'flyer',
     introLine: '“帅哥美女了解一下！游泳健身免费体验！”',
     winLine: '“行行行那我发下一位，祝您发财！”',
-    loseLine: '“来来扫个码领小礼品顺便留个电话！”（社死！）',
+    loseLine: '“来来扫个码领小礼品顺便留个电话！”（心态崩了！）',
     moves: [
-      { label: '强塞传单', damage: 9, line: '“了解一下！游泳健身新店开业大促！”' },
-      { label: '贴身跟走', damage: 12, line: '“我就跟您走十米！只要一分钟！”' },
-      { label: '扫码关注', damage: 8, line: '“扫一下不花钱，送你一包抽纸！”' },
+      { intentType: 'attack', label: '强塞传单', damage: 9, line: '“了解一下！游泳健身新店开业大促！”' },
+      { intentType: 'buff', label: '激情喊麦', atkBuff: 3, line: '“今天最后十个名额！听我给你算笔账！”' },
+      { intentType: 'attack_defend', label: '贴身拦路', damage: 9, block: 6, line: '“我就跟您走十米！只要一分钟！”' },
     ],
   },
   tony: {
@@ -108,11 +113,12 @@ export const ENEMIES: Record<string, EnemyDef> = {
     img: './assets/enemy_tony.jpg',
     introLine: '“宝，发质太干了，办张 3000 的卡吧？”',
     winLine: '“行行行算你狠，头发吹好了慢走不送！”',
-    loseLine: '“刷卡成功！欢迎成为尊贵黑金会员！”（钱包社死！）',
+    loseLine: '“刷卡成功！欢迎成为尊贵黑金会员！”（心态崩了！）',
     moves: [
-      { label: '推销暴击', damage: 12, line: '“宝，发质太干了，办张 3000 的卡吧？”' },
-      { label: '店长特批', damage: 16, line: '“今天店长刚好在，给你内部价 2888！”' },
-      { label: '打折诱惑', damage: 10, heal: 4, line: '“哥给你剪这么帅，不办卡我都心疼你！”' },
+      { intentType: 'attack', label: '推销暴击', damage: 12, line: '“宝，发质太干了，办张 3000 的卡吧？”' },
+      { intentType: 'defend', label: '搬出店长', block: 12, line: '“我也是为你好呀，咱店长亲自批的折扣！”' },
+      { intentType: 'buff', label: '吹嘘发质', atkBuff: 4, line: '“再不做护理，你这头皮马上要告急啦！”' },
+      { intentType: 'attack', label: '内部特批', damage: 14, line: '“今天给你留个内部名额，2888 拿下！”' },
     ],
   },
   auntie: {
@@ -125,11 +131,11 @@ export const ENEMIES: Record<string, EnemyDef> = {
     svgKey: 'auntie',
     introLine: '“听说表哥年薪五十万，你今年涨薪没？”',
     winLine: '“行了行了厨房饺子好了，二姨去看看火！”',
-    loseLine: '“明早九点公园相亲角，二姨给你约好了！”（社死！）',
+    loseLine: '“明早九点公园相亲角，二姨给你约好了！”（心态崩了！）',
     moves: [
-      { label: '灵魂拷问', damage: 14, line: '“今年涨薪没？年终奖发了几个数呀？”' },
-      { label: '催婚连击', damage: 18, line: '“隔壁王阿姨女儿都二胎了，你别太挑啦！”' },
-      { label: '嗑瓜子蓄力', damage: 11, heal: 5, line: '“别光喝水呀，跟二姨掏心窝子说说！”' },
+      { intentType: 'attack', label: '灵魂拷问', damage: 14, line: '“今年涨薪没？年终奖发了几个数呀？”' },
+      { intentType: 'buff', label: '嗑瓜子蓄力', atkBuff: 4, heal: 5, line: '“别光喝水呀，二姨这儿还有一堆亲戚要夸呢！”' },
+      { intentType: 'attack_defend', label: '催婚连击', damage: 15, block: 10, line: '“隔壁王阿姨女儿都二胎了，二姨都是为你好！”' },
     ],
   },
   boss_pie: {
@@ -144,9 +150,9 @@ export const ENEMIES: Record<string, EnemyDef> = {
     winLine: '“嗯…方案你先按你想法推，我还有个会！”',
     loseLine: '“周末大家一起冲刺一下，下季度给你画更大的饼！”',
     moves: [
-      { label: '画饼攻击', damage: 13, line: '“年轻人别只看钱，我看好你的成长！”' },
-      { label: '赋能暴击', damage: 18, line: '“咱们要对齐颗粒度、打通底层逻辑！”' },
-      { label: '端杯画饼', damage: 11, heal: 6, line: '“公司上市了一定不会亏待老员工！”' },
+      { intentType: 'buff', label: '画大饼赋能', atkBuff: 4, heal: 5, line: '“公司上市了一定不会亏待老员工！”' },
+      { intentType: 'attack', label: '绩效施压', damage: 15, line: '“咱们要对齐颗粒度、打通底层逻辑！”' },
+      { intentType: 'defend', label: '甩给HR', block: 14, line: '“涨薪流程在走审批，你先专注产出！”' },
     ],
   },
   versailles: {
@@ -161,10 +167,10 @@ export const ENEMIES: Record<string, EnemyDef> = {
     winLine: '“咳！代驾到了我先撤，今晚这桌AA哈！”',
     loseLine: '“别灰心，以后跟我混，给你留个副总位置！”',
     moves: [
-      { label: '凡尔赛开场', damage: 14, line: '“哎呀也就随便赚了点小钱，真羡慕你清闲～”' },
-      { label: '晒表炫富', damage: 16, heal: 6, line: '“这表走得不太准，修一下又要十几万真烦！”' },
-      { label: '帕拉梅拉暴击', damage: 22, line: '“刚提了辆帕拉梅拉，就是小区车位有点窄！”' },
-      { label: '降维打击', damage: 15, line: '“其实年薪百万压力挺大的，还是你自在！”' },
+      { intentType: 'attack_defend', label: '凡尔赛开场', damage: 13, block: 10, line: '“哎呀也就随便赚了点小钱，真羡慕你清闲～”' },
+      { intentType: 'buff', label: '晒表炫富', atkBuff: 5, heal: 6, line: '“这表走得不太准，修一下又要十几万真烦！”' },
+      { intentType: 'attack', label: '帕拉梅拉暴击', damage: 18, line: '“刚提了辆帕拉梅拉，就是小区车位有点窄！”' },
+      { intentType: 'defend', label: '接跨国电话', block: 16, line: '“稍等啊，我先接个几个亿的海外电话…”' },
     ],
   },
 };

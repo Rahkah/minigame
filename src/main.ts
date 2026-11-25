@@ -16,9 +16,12 @@ import {
   enterRestStage,
   evaluateCardPreview,
   getEffectiveEnemyDamage,
+  getEnemyIntentExplain,
   getEnemyMove,
   getMvpCardName,
+  getRawEnemyDamage,
   getSurvivalRank,
+  markTutorialSeen,
   playSelectedCard,
   preparePostBattleReward,
   startBattle,
@@ -31,6 +34,37 @@ if (!root) {
 }
 
 let run: RunState = createNewRun();
+
+interface TutorialStepSpec {
+  title: string;
+  body: string;
+  position: 'top' | 'bottom';
+  showIntentLegend?: boolean;
+}
+
+const TUTORIAL_STEPS: TutorialStepSpec[] = [
+  {
+    title: '① 先看对手「下回合打算干嘛」',
+    body: '左上角跳动的图标就是对手下回合的动作！红刀代表要打你（赶紧叠脸皮），蓝盾代表只防御不打人，黄箭代表在蓄力加攻击。点击意图图标随时可看详细提示！',
+    position: 'bottom',
+    showIntentLegend: true,
+  },
+  {
+    title: '② ❤️心态 = 生命值，🛡️脸皮 = 本回合护盾',
+    body: '对手攻击时会先消耗你的【🛡️脸皮】，扛不住才会扣【❤️心态】！打出蓝色卡（如《下次一定》）就能加厚脸皮挡伤害。',
+    position: 'top',
+  },
+  {
+    title: '③ 先挂 🔥破防，再 ⚔️怼人直接 ×2 暴击！',
+    body: '每回合有 3 点【⚡话头】出牌。先打《已读乱回》挂上 🔥破防，下一张 ⚔️怼人卡 的伤害数字会自动翻倍变红！挂 🌀语塞 则让对手下回合攻击减半。',
+    position: 'top',
+  },
+  {
+    title: '④ 手机单手操作：点一次预览，再点或上滑出牌',
+    body: '点一下手牌，敌方血条会实时闪现预计扣血/斩杀；确认无误后再点一次（或向上滑）即可打出！出完牌点「结束回合」看对手出招。',
+    position: 'top',
+  },
+];
 
 function renderCardArt(templateId: string): string {
   const tpl = CARD_TEMPLATES[templateId];
@@ -60,7 +94,7 @@ function renderTitle(): string {
       <div>
         <div class="title-kicker">极简话术肉鸽 · 5 站完整可玩版</div>
         <h1 class="title-main"><span class="title-hi">社恐生存图鉴</span></h1>
-        <div class="title-sub">守住 ❤️ 心态 · 叠厚 🛡️ 脸皮 · 怼赢全场</div>
+        <div class="title-sub">看懂对手意图 · 守住 ❤️心态 · 叠厚 🛡️脸皮</div>
       </div>
 
       <div class="title-hero">
@@ -70,12 +104,13 @@ function renderTitle(): string {
 
       <div class="title-actions">
         <div class="legend-strip">
-          <span class="legend-pill red">⚔️ 怼：打气势</span>
-          <span class="legend-pill blue">🛡️ 脸皮：本回合挡伤</span>
-          <span class="legend-pill yellow">⚡ 话头 / 🃏 抽牌</span>
+          <span class="legend-pill red">⚔️ 红=攻击</span>
+          <span class="legend-pill blue">🛡️ 蓝=防御/脸皮</span>
+          <span class="legend-pill yellow">📈 黄=蓄力加Buff</span>
           <span class="legend-pill purple">🔥破防×2 · 🌀语塞÷2</span>
         </div>
         <button class="doodle-btn" data-action="start-run">开始今日 5 站社交 ▸</button>
+        <button class="doodle-btn secondary" data-action="start-tutorial">❓ 15 秒新手教学局</button>
       </div>
     </section>
   `;
@@ -158,21 +193,55 @@ function renderMap(): string {
   `;
 }
 
-function renderBattle(): string {
+function renderEnemyIntentBadge(tutStep: number | null): string {
   const b = run.battle;
   if (!b) return '';
 
   const move = getEnemyMove(b);
-  const rawDmg = move.damage;
+  const rawDmg = getRawEnemyDamage(b);
   const effDmg = getEffectiveEnemyDamage(b);
-  const weakened = b.enemySpeechless > 0;
+  const weakened = b.enemySpeechless > 0 && effDmg > 0;
+  const focusCls = tutStep === 0 ? 'tut-focus' : '';
 
+  let subLabel = '下回合动作';
+  let mainValue = '';
+
+  if (move.intentType === 'attack') {
+    subLabel = '下回合打你';
+    mainValue = `⚔️ ${weakened ? `<span class="ib-old">${rawDmg}</span>` : ''}${effDmg}`;
+  } else if (move.intentType === 'defend') {
+    subLabel = '下回合防御';
+    mainValue = `🛡️ +${move.block ?? 0}`;
+  } else if (move.intentType === 'buff') {
+    subLabel = '下回合蓄力';
+    mainValue = `📈 攻+${move.atkBuff ?? 0}`;
+  } else {
+    subLabel = '下回合攻防';
+    mainValue = `⚔️${effDmg} 🛡️${move.block ?? 0}`;
+  }
+
+  return `
+    <button class="intent-burst ${move.intentType} ${weakened ? 'weakened' : ''} ${focusCls}" data-action="explain-intent">
+      <span class="ib-next">${subLabel}</span>
+      <span class="ib-t">${move.label}</span>
+      <span class="ib-n">${mainValue}</span>
+    </button>
+  `;
+}
+
+function renderBattle(): string {
+  const b = run.battle;
+  if (!b) return '';
+
+  const tut = run.tutorialStep;
   const selectedCard = b.selectedUid ? b.hand.find((c) => c.uid === b.selectedUid) ?? null : null;
   const selectedPreview = selectedCard ? evaluateCardPreview(selectedCard, b) : null;
 
   const enemyPct = Math.max(0, (b.enemyHp / b.enemy.maxHp) * 100);
-  const previewDmg = selectedPreview && selectedPreview.canPlay ? selectedPreview.totalDamage : 0;
-  const projectedEnemyHp = Math.max(0, b.enemyHp - previewDmg);
+  const previewTotalDmg = selectedPreview && selectedPreview.canPlay ? selectedPreview.totalDamage : 0;
+  const shieldAbsorb = Math.min(b.enemyFace, previewTotalDmg);
+  const hpDmgPreview = Math.max(0, previewTotalDmg - shieldAbsorb);
+  const projectedEnemyHp = Math.max(0, b.enemyHp - hpDmgPreview);
   const projectedPct = Math.max(0, (projectedEnemyHp / b.enemy.maxHp) * 100);
   const cutWidthPct = Math.max(0, enemyPct - projectedPct);
 
@@ -198,19 +267,16 @@ function renderBattle(): string {
             .join('')}
         </div>
         <div class="enemy-statuses">
+          ${b.enemyAtkBuff > 0 ? `<span class="status-badge atk-buff">💢攻+${b.enemyAtkBuff}</span>` : ''}
           ${b.enemyBreak > 0 ? `<span class="status-badge break">🔥破防×2</span>` : ''}
           ${b.enemySpeechless > 0 ? `<span class="status-badge speechless">🌀语塞÷2</span>` : ''}
+          <button class="help-dot" data-action="open-tutorial" title="重看新手教学">?</button>
         </div>
       </div>
 
       <div class="enemy-zone">
         <div class="intent-cluster">
-          <div class="intent-burst ${weakened ? 'weakened' : ''}">
-            <span class="ib-t">${move.label}${move.heal ? '+回气' : ''}</span>
-            <span class="ib-n">
-              ${weakened ? `<span class="ib-old">${rawDmg}</span>` : ''}${effDmg}
-            </span>
-          </div>
+          ${renderEnemyIntentBadge(tut)}
           <div class="speech-cloud">${b.enemyLine}</div>
         </div>
 
@@ -221,10 +287,19 @@ function renderBattle(): string {
 
         <div class="enemy-hp-block">
           <div class="enemy-hp-row">
-            <span>${b.enemy.name} · 气势 ${b.enemyHp}/${b.enemy.maxHp}</span>
+            <span>
+              ${b.enemy.name} · 气势 ${b.enemyHp}/${b.enemy.maxHp}
+              ${b.enemyFace > 0 ? `<span class="enemy-shield-pill">🛡️${b.enemyFace}</span>` : ''}
+            </span>
             ${
-              previewDmg > 0
-                ? `<span class="preview-dmg-tag">预计 -${previewDmg}${projectedEnemyHp === 0 ? ' 斩杀!' : ''}</span>`
+              previewTotalDmg > 0
+                ? `<span class="preview-dmg-tag">${
+                    shieldAbsorb > 0
+                      ? hpDmgPreview > 0
+                        ? `破盾并 -${hpDmgPreview}${projectedEnemyHp === 0 ? ' 斩杀!' : ''}`
+                        : `打敌盾 -${shieldAbsorb}`
+                      : `预计 -${hpDmgPreview}${projectedEnemyHp === 0 ? ' 斩杀!' : ''}`
+                  }</span>`
                 : ''
             }
           </div>
@@ -239,8 +314,8 @@ function renderBattle(): string {
         </div>
       </div>
 
-      <div class="hud-bar">
-        <div class="energy-circle">
+      <div class="hud-bar ${tut === 1 ? 'tut-focus' : ''}">
+        <div class="energy-circle ${tut === 2 ? 'tut-focus' : ''}">
           <strong>${b.energy}/${b.maxEnergy}</strong>
           <span>话头</span>
         </div>
@@ -260,7 +335,7 @@ function renderBattle(): string {
           <strong>${displayedFace}</strong>
         </div>
 
-        <button class="end-btn" data-action="end-turn">
+        <button class="end-btn ${tut === 3 ? 'tut-focus' : ''}" data-action="end-turn">
           ${b.outcome === 'won' ? '领奖励▸' : b.outcome === 'lost' ? '看战报' : '结束回合'}
         </button>
       </div>
@@ -273,11 +348,11 @@ function renderBattle(): string {
               }`
             : b.outcome === 'won'
               ? '🎉 对方已词穷退场！点击右侧「领奖励▸」继续行程'
-              : '👆 点一下卡牌预览效果，再点一次或向上滑出牌'
+              : '👆 点一下卡牌预览效果，再点一次或向上滑出牌（点左上意图可看说明）'
         }
       </div>
 
-      <div class="hand-fan">
+      <div class="hand-fan ${tut === 2 || tut === 3 ? 'tut-focus' : ''}">
         ${b.hand
           .map((card, idx) => {
             const p = evaluateCardPreview(card, b);
@@ -314,7 +389,45 @@ function renderBattle(): string {
         <span>第 ${b.turn} 回合</span>
         <span>🗑️ 弃牌 ${b.discardPile.length}</span>
       </div>
+
+      ${renderTutorialOverlay()}
     </section>
+  `;
+}
+
+function renderTutorialOverlay(): string {
+  if (run.tutorialStep === null) return '';
+  const step = TUTORIAL_STEPS[run.tutorialStep];
+  if (!step) return '';
+  const isLast = run.tutorialStep === TUTORIAL_STEPS.length - 1;
+
+  return `
+    <div class="tut-backdrop pos-${step.position}" data-stop="1">
+      <div class="tut-card">
+        <div class="tut-top-row">
+          <span class="tut-step-pill">新手引导 ${run.tutorialStep + 1} / ${TUTORIAL_STEPS.length}</span>
+          <button class="tut-skip" data-action="tut-skip">跳过引导</button>
+        </div>
+        <h3>${step.title}</h3>
+        <p>${step.body}</p>
+        ${
+          step.showIntentLegend
+            ? `
+          <div class="tut-legend">
+            <span class="tut-chip atk">⚔️ 红标：打你心态</span>
+            <span class="tut-chip def">🛡️ 蓝标：对方加盾</span>
+            <span class="tut-chip buf">📈 黄标：蓄力加攻</span>
+          </div>
+        `
+            : ''
+        }
+        <div class="tut-actions">
+          <button class="tut-next-btn" data-action="tut-next">
+            ${isLast ? '懂了，开始开怼！▸' : '下一步 ▸'}
+          </button>
+        </div>
+      </div>
+    </div>
   `;
 }
 
@@ -577,6 +690,7 @@ function bindCardGestures(): void {
     let moved = false;
 
     el.addEventListener('pointerdown', (e) => {
+      if (run.tutorialStep !== null) return;
       e.stopPropagation();
       startY = e.clientY;
       moved = false;
@@ -584,7 +698,7 @@ function bindCardGestures(): void {
     });
 
     el.addEventListener('pointermove', (e) => {
-      if (startY === 0) return;
+      if (startY === 0 || run.tutorialStep !== null) return;
       const dy = e.clientY - startY;
       if (dy < -12) {
         moved = true;
@@ -595,6 +709,7 @@ function bindCardGestures(): void {
     });
 
     el.addEventListener('pointerup', (e) => {
+      if (run.tutorialStep !== null) return;
       e.stopPropagation();
       const dy = e.clientY - startY;
       startY = 0;
@@ -602,13 +717,11 @@ function bindCardGestures(): void {
       const b = run.battle;
       if (!b || b.outcome !== 'ongoing') return;
 
-      // Swipe up > 42px plays immediately in one thumb flick!
       if (moved && dy < -42) {
         handlePlay(uid);
         return;
       }
 
-      // Tap once = preview, tap again = play!
       if (b.selectedUid === uid) {
         handlePlay(uid);
       } else {
@@ -630,15 +743,12 @@ function render(): void {
 
   root!.innerHTML = html + renderDeckModal();
 
-  // Prevent modal clicks from closing
   root!.querySelectorAll<HTMLElement>('[data-stop]').forEach((el) => {
     el.addEventListener('click', (e) => e.stopPropagation());
   });
 
-  // Bind swipe + tap-to-preview cards in battle
   bindCardGestures();
 
-  // Enemy selection on map
   root!.querySelectorAll<HTMLElement>('[data-enemy]').forEach((el) => {
     el.addEventListener('click', () => {
       const enemyId = el.dataset.enemy;
@@ -649,7 +759,6 @@ function render(): void {
     });
   });
 
-  // Relic tooltip toast in battle
   root!.querySelectorAll<HTMLElement>('[data-relic]').forEach((el) => {
     el.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -663,7 +772,6 @@ function render(): void {
     });
   });
 
-  // Reward card pick
   root!.querySelectorAll<HTMLElement>('[data-pick-card]').forEach((el) => {
     el.addEventListener('click', () => {
       const id = el.dataset.pickCard;
@@ -673,7 +781,6 @@ function render(): void {
     });
   });
 
-  // Reward upgrade pick
   root!.querySelectorAll<HTMLElement>('[data-upgrade-uid]').forEach((el) => {
     el.addEventListener('click', () => {
       const uid = el.dataset.upgradeUid;
@@ -684,7 +791,6 @@ function render(): void {
     });
   });
 
-  // Rest upgrade / remove
   root!.querySelectorAll<HTMLElement>('[data-rest-upgrade]').forEach((el) => {
     el.addEventListener('click', () => {
       const uid = el.dataset.restUpgrade;
@@ -708,7 +814,6 @@ function render(): void {
     });
   });
 
-  // General actions
   root!.querySelectorAll<HTMLElement>('[data-action]').forEach((el) => {
     el.addEventListener('click', (e) => {
       const action = el.dataset.action;
@@ -718,6 +823,37 @@ function render(): void {
         case 'start-run':
           run.screen = 'map';
           render();
+          break;
+        case 'start-tutorial':
+          run = createNewRun();
+          startBattle(run, 'colleague', true);
+          render();
+          break;
+        case 'open-tutorial':
+          run.tutorialStep = 0;
+          render();
+          break;
+        case 'tut-next':
+          if (run.tutorialStep === null) break;
+          if (run.tutorialStep < TUTORIAL_STEPS.length - 1) {
+            run.tutorialStep += 1;
+          } else {
+            run.tutorialStep = null;
+            markTutorialSeen();
+          }
+          render();
+          break;
+        case 'tut-skip':
+          run.tutorialStep = null;
+          markTutorialSeen();
+          render();
+          break;
+        case 'explain-intent':
+          if (run.battle) {
+            run.battle.sfxText = getEnemyIntentExplain(run.battle);
+            run.battle.sfxSeq += 1;
+            render();
+          }
           break;
         case 'restart-run':
           run = createNewRun();
