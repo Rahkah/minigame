@@ -4,7 +4,7 @@
  */
 
 export const ENEMY_SVG: Record<string, string> = {
-  colleague: `<svg viewBox="0 0 220 190" fill="none" xmlns="http://www.w3.org/2000/svg">
+  colleague: `<svg width="220" height="190" viewBox="0 0 220 190" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g stroke="#141414" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
       <!-- Suit shoulders -->
       <path d="M52 184C54 146 72 132 110 132C148 132 166 146 168 184" fill="#FFFFFF"/>
@@ -29,7 +29,7 @@ export const ENEMY_SVG: Record<string, string> = {
     </g>
   </svg>`,
 
-  flyer: `<svg viewBox="0 0 220 190" fill="none" xmlns="http://www.w3.org/2000/svg">
+  flyer: `<svg width="220" height="190" viewBox="0 0 220 190" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g stroke="#141414" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
       <!-- Body leaning forward -->
       <path d="M62 184C66 142 84 128 114 128C144 128 164 142 168 184" fill="#FFFFFF"/>
@@ -51,7 +51,7 @@ export const ENEMY_SVG: Record<string, string> = {
     </g>
   </svg>`,
 
-  auntie: `<svg viewBox="0 0 220 190" fill="none" xmlns="http://www.w3.org/2000/svg">
+  auntie: `<svg width="220" height="190" viewBox="0 0 220 190" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g stroke="#141414" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
       <!-- Curly perm cloud hair -->
       <path d="M52 94C36 82 38 56 54 48C54 26 80 18 100 26C116 14 146 20 156 38C178 42 184 68 170 86C182 100 172 122 152 120L66 120C48 122 40 106 52 94Z" fill="#141414"/>
@@ -79,7 +79,7 @@ export const ENEMY_SVG: Record<string, string> = {
     </g>
   </svg>`,
 
-  boss_pie: `<svg viewBox="0 0 220 190" fill="none" xmlns="http://www.w3.org/2000/svg">
+  boss_pie: `<svg width="220" height="190" viewBox="0 0 220 190" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g stroke="#141414" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
       <!-- Giant glowing golden flatbread ("大饼") floating behind boss -->
       <ellipse cx="144" cy="64" rx="58" ry="34" transform="rotate(-14 144 64)" fill="#FFE600"/>
@@ -104,7 +104,7 @@ export const ENEMY_SVG: Record<string, string> = {
     </g>
   </svg>`,
 
-  versailles: `<svg viewBox="0 0 220 190" fill="none" xmlns="http://www.w3.org/2000/svg">
+  versailles: `<svg width="220" height="190" viewBox="0 0 220 190" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g stroke="#141414" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
       <!-- Dramatic flash rays -->
       <path d="M22 46L44 58M198 46L176 58M32 104L52 102M188 104L168 102M110 8V24" stroke="#FFE600" stroke-width="5.5"/>
@@ -134,7 +134,7 @@ export const ENEMY_SVG: Record<string, string> = {
 };
 
 export const CARD_SVG: Record<string, string> = {
-  nonsense: `<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  nonsense: `<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g stroke="#141414" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="60" cy="66" r="32" fill="#FFFFFF"/>
       <!-- Swirly dizzy eyes -->
@@ -149,7 +149,7 @@ export const CARD_SVG: Record<string, string> = {
     </g>
   </svg>`,
 
-  drink: `<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  drink: `<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g stroke="#141414" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="54" cy="56" r="30" fill="#FFFFFF"/>
       <path d="M40 50L48 54L40 58M62 50L54 54L62 58"/>
@@ -162,7 +162,7 @@ export const CARD_SVG: Record<string, string> = {
     </g>
   </svg>`,
 
-  blessing: `<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  blessing: `<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g stroke="#141414" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
       <!-- Golden halo -->
       <ellipse cx="60" cy="20" rx="26" ry="8" fill="#FFE600"/>
@@ -176,7 +176,7 @@ export const CARD_SVG: Record<string, string> = {
     </g>
   </svg>`,
 
-  no_shame: `<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  no_shame: `<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g stroke="#141414" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
       <path d="M12 24L28 34M108 24L92 34M12 88L28 78M108 88L92 78" stroke="#FF3B30" stroke-width="5"/>
       <circle cx="60" cy="60" r="34" fill="#FFE600"/>
@@ -188,7 +188,7 @@ export const CARD_SVG: Record<string, string> = {
     </g>
   </svg>`,
 
-  borrow: `<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  borrow: `<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g stroke="#141414" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="60" cy="48" r="28" fill="#FFFFFF"/>
       <!-- Giant starry puppy eyes -->
@@ -204,7 +204,7 @@ export const CARD_SVG: Record<string, string> = {
     </g>
   </svg>`,
 
-  pass_buck: `<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  pass_buck: `<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g stroke="#141414" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
       <!-- Flying black frying pan ("锅") -->
       <ellipse cx="82" cy="36" rx="22" ry="14" transform="rotate(-18 82 36)" fill="#141414"/>
@@ -218,7 +218,7 @@ export const CARD_SVG: Record<string, string> = {
     </g>
   </svg>`,
 
-  you_right: `<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  you_right: `<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g stroke="#141414" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="60" cy="60" r="32" fill="#FFFFFF"/>
       <!-- Dead-inside blank eyes -->
@@ -233,7 +233,7 @@ export const CARD_SVG: Record<string, string> = {
     </g>
   </svg>`,
 
-  off_work: `<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  off_work: `<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g stroke="#141414" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
       <!-- Doorway -->
       <rect x="68" y="18" width="38" height="86" fill="#FFE600"/>
@@ -245,7 +245,7 @@ export const CARD_SVG: Record<string, string> = {
     </g>
   </svg>`,
 
-  uh_huh: `<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  uh_huh: `<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g stroke="#141414" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="56" cy="64" r="30" fill="#FFFFFF"/>
       <path d="M42 58H52M62 58H72"/>
@@ -257,7 +257,7 @@ export const CARD_SVG: Record<string, string> = {
     </g>
   </svg>`,
 
-  flatter: `<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  flatter: `<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g stroke="#141414" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="60" cy="48" r="26" fill="#FFFFFF"/>
       <path d="M46 44L54 48L46 52M74 44L66 48L74 52"/>
@@ -269,7 +269,7 @@ export const CARD_SVG: Record<string, string> = {
     </g>
   </svg>`,
 
-  restroom: `<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  restroom: `<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g stroke="#141414" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
       <!-- Speed dash lines -->
       <path d="M12 46H34M8 66H30M14 86H36" stroke="#FF3B30" stroke-width="5"/>
@@ -280,7 +280,7 @@ export const CARD_SVG: Record<string, string> = {
     </g>
   </svg>`,
 
-  no_money: `<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  no_money: `<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g stroke="#141414" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
       <!-- Empty open wallet with flying moth -->
       <path d="M22 54L60 36L98 54V92L60 106L22 92V54Z" fill="#FFFFFF"/>
